@@ -1,0 +1,101 @@
+TOKEN "Daniels, Lane and Farrell token" READ
+
+TOKEN "Conrad Inc token" READ
+
+NODE chart_total_spent
+SQL >
+
+    SELECT customer_name,toStartOfMonth(shipping_date) t, round(sum(price),3) as total_spent
+    FROM shipping_pallets_t_3443
+    GROUP BY customer_name, t
+    ORDER BY t ASC
+
+
+
+NODE chart_shipments
+SQL >
+
+    SELECT customer_name, toStartOfMonth(shipping_date) t, count() as total_shipments
+    FROM shipping_pallets_t_3443
+    GROUP BY customer_name, t
+    ORDER BY t ASC
+
+
+
+NODE chart_on_time_pick_ups
+SQL >
+
+    SELECT 
+      customer_name,
+      toStartOfMonth(shipping_date) t,
+      sumIf(picked_up_on_time='true',1) as on_time_pick_ups,
+      count()-on_time_pick_ups+3 as delayed_pick_ups
+    FROM shipping_pallets_t_3443
+    GROUP BY customer_name, t
+    ORDER BY t ASC
+
+
+
+NODE fill_months
+SQL >
+
+    %
+    WITH
+      toMonth(parseDateTimeBestEffort({{String(date_from, '2023-01-01T00:00:00Z', required=True)}})) AS month_from,
+      toMonth(parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59Z', required=True)}})) AS month_to
+    SELECT
+      if(month_from==month_to, arrayJoin([month_from]), arrayJoin(range(month_from, month_to+1, 1))) as t
+
+
+
+
+NODE fill_dates
+SQL >
+
+    %
+    SELECT toDate(parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59Z', required=True)}})) AS t
+    ORDER BY t ASC
+    WITH FILL
+    FROM toDate(parseDateTimeBestEffort({{String(date_from, '2023-07-01T00:00:00Z', required=True)}}))
+           TO toDate(parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59Z', required=True)}})) 
+           STEP interval 1 day
+
+
+
+NODE fill_weeks
+SQL >
+
+    %
+    SELECT toStartOfWeek(parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59Z', required=True)}}),1) AS t
+    ORDER BY t ASC
+    WITH FILL
+    FROM toStartOfWeek(parseDateTimeBestEffort({{String(date_from, '2023-07-01T00:00:00Z', required=True)}}),1)
+           TO toStartOfWeek(parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59Z', required=True)}}),1) 
+           STEP interval 1 week
+
+
+
+NODE endpoint
+SQL >
+
+    %
+    {% if not defined(kpi) or kpi not in ['shipments','pallets','spent','on_time_pickups','on_time_dropoffs'] %}
+      {{ error('kpi query param is required and needs to be one of the following: shipment, pallets, spent, on_time_pickups, on_time_dropoffs') }}
+    {% end %}
+    SELECT *
+    {%if kpi == 'shipments'%}
+    FROM chart_shipments
+    {%elif kpi == 'spent'%}
+    FROM chart_total_spent
+    {%elif kpi == 'on_time_pickups'%}
+    FROM chart_on_time_pick_ups
+    --rest and default to be added
+    {%else%}
+    FROM chart_total_spent
+    {%end%}
+    RIGHT JOIN fill_dates USING t
+    --once selected time range in chart is taken into account
+    --we should also make the right join dynamic
+
+
+

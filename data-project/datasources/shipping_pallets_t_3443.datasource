@@ -1,0 +1,20 @@
+
+SCHEMA >
+    `shipment_id` Nullable(String),
+    `customer_name` Nullable(String),
+    `pallets` Nullable(Int64),
+    `price` Nullable(Float64),
+    `picked_up_on_time` Nullable(String),
+    `delivered_on_time` Nullable(String),
+    `timestamp` Nullable(DateTime64(3)),
+    `shipping_date` Nullable(Date32),
+    `insertion_date` DateTime DEFAULT now()
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYear(insertion_date)"
+ENGINE_SORTING_KEY "insertion_date"
+
+IMPORT_SERVICE 'bigquery'
+IMPORT_SCHEDULE '0 0 */2 * *'
+IMPORT_STRATEGY 'replace'
+IMPORT_QUERY 'SELECT `shipment_id`, `customer_name`, `pallets`, `price`, CAST(`picked_up_on_time` AS STRING) AS `picked_up_on_time`, CAST(`delivered_on_time` AS STRING) AS `delivered_on_time`, `timestamp`, `shipping_date` FROM `development-353413.shipping_pallets.shipping_pallets_t`'

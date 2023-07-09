@@ -1,0 +1,41 @@
+TOKEN "Daniels, Lane and Farrell token" READ
+
+TOKEN "Conrad Inc token" READ
+
+NODE kpi_total_spent
+SQL >
+
+    SELECT customer_name, round(sum(price),3) as total_spent
+    FROM shipping_pallets_t_3443
+    GROUP BY customer_name
+
+
+
+NODE kpi_shipments
+SQL >
+
+    SELECT customer_name, count() as total_shipments
+    FROM shipping_pallets_t_3443
+    GROUP BY customer_name
+    -- need to add time filter
+    --ORDER BY total_shipments DESC
+
+
+
+NODE endpoint
+SQL >
+
+    %
+    {% if not defined(kpi) or kpi not in ['shipments','pallets','spent','on_time_pickups','on_time_dropoffs'] %}
+      {{ error('kpi query param is required and needs to be one of the following: shipment, pallets, spent, on_time_pickups, on_time_dropoffs') }}
+    {% end %}
+    SELECT * 
+    {%if kpi == 'shipments'%}
+    FROM kpi_shipments
+    {%elif kpi == 'spent'%}
+    FROM kpi_total_spent
+    --rest and default to be added
+    {%end%}
+
+
+
