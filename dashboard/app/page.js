@@ -39,9 +39,10 @@ export default function Dashboard() {
   const [kpiPickupOntime, setKpiPickupOntime] = useState([{ customer_name: '', percent_picked_up_on_time: 0.0 }]);
   const [kpiDeliveredOntime, setKpiDeliveredOntime] = useState([{ customer_name: '', pct_delivered_ontime: 0.0 }]);
   const [chartShipments, setChartShipments] = useState([{ customer_name: '', t: '', total_shipments: 0 }]);
-  const [chartOnTimePickups, setChartOnTimePickups] = useState([{ customer_name: '', t: '', on_time_pick_ups: 2, delayed_pick_ups: 1 }]);
-
-
+  const [chartService, setChartService] = useState([{ customer_name: '', t: '', on_time_drop_offs: 0, delayed_drop_offs: 0 }]);
+  const [chartPallets, setChartPallets] = useState([{ customer_name: '', t: '', total_pallets: 0 }]);
+  const [chartUrgency, setChartUrgency] = useState([{ customer_name: '', t: '', on_time_pick_ups: 0, delayed_pick_ups: 0 }]);
+  const [chartSpending, setChartSpending] = useState([{ customer_name: '', t: '', total_spent: 0 }]);
 
 
   let date_from = dates.from ? new Date(dates.from.getTime() - dates.from.getTimezoneOffset() * 60000).toISOString() : new Date(2023, 5, 1).toISOString();
@@ -54,18 +55,10 @@ export default function Dashboard() {
   let apiKpiDeliveredOntime = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=pct_delivered_ontime&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
 
   let apiChartShipments = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=shipments&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
-  let apiChartOnTimePickups = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=on_time_pickups&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
-
-
-  // quickRefresh ?
-  //   useInterval(() => {
-  //     fetchTinybirdUrl(apiAccessMethods, setAccessMethods);
-  //   }, msRefresh)
-  //   :
-  //   useInterval(() => {
-  //     fetchTinybirdUrl(apiAccessMethods, setAccessMethods);
-  //   }, msRefresh * 10000)
-
+  let apiChartService = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=service&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
+  let apiChartPallets = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=pallets&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
+  let apiChartUrgency = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=urgency&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
+  let apiChartSpending = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=spending&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
 
   useInterval(() => {
     fetchTinybirdUrl(apiKpiShipments, setKpiShipments);
@@ -116,20 +109,43 @@ export default function Dashboard() {
   }, [apiChartShipments]);
 
   useInterval(() => {
-    fetchTinybirdUrl(apiChartOnTimePickups, setChartOnTimePickups);
+    fetchTinybirdUrl(apiChartService, setChartService);
   }, msRefresh)
 
   useEffect(() => {
-    fetchTinybirdUrl(apiChartOnTimePickups, setChartOnTimePickups);
-  }, [apiChartOnTimePickups]);
+    fetchTinybirdUrl(apiChartService, setChartService);
+  }, [apiChartService]);
 
+  useInterval(() => {
+    fetchTinybirdUrl(apiChartPallets, setChartPallets);
+  }, msRefresh)
 
+  useEffect(() => {
+    fetchTinybirdUrl(apiChartPallets, setChartPallets);
+  }, [apiChartPallets]);
+
+  useInterval(() => {
+    fetchTinybirdUrl(apiChartUrgency, setChartUrgency);
+  }, msRefresh)
+
+  useEffect(() => {
+    fetchTinybirdUrl(apiChartUrgency, setChartUrgency);
+  }, [apiChartUrgency]);
+
+  useInterval(() => {
+    fetchTinybirdUrl(apiChartSpending, setChartSpending);
+  }, msRefresh)
+
+  useEffect(() => {
+    fetchTinybirdUrl(apiChartSpending, setChartSpending);
+  }, [apiChartSpending]);
+
+  
   const validateInputToken = async (inputValue) => {
     const response = await fetch(`https://${TINYBIRD_HOST}/v0/pipes?token=${inputValue}`);
     // console.log(response.status)
     return response.status === 200;
   };
-
 
   const handleInputTokenChange = async (event) => {
     const newToken = event.target.value;
@@ -148,6 +164,24 @@ export default function Dashboard() {
         <title>Partner Dashboard</title>
       </Head>
       <main className="bg-slate-50 p-6 sm:p-10">
+      <Title>{kpiPallets[0].customer_name} Partnership Dashboard</Title>
+
+      <Text>Token</Text>
+            <TextInput
+              value={token}
+              onChange={handleInputTokenChange}
+              className="mt-2 max-w-xs"
+            // error={async (value) => !await validateInputToken(value)}
+            />
+      
+
+      <DateRangePicker
+            value={dates}
+            onValueChange={setDates}
+            enableYearPagination={true}
+            dropdownPlaceholder="Pick dates"
+            className="mt-2"
+          />
 
         <Grid
           numItemsLg={5}
@@ -195,19 +229,30 @@ export default function Dashboard() {
               />
             </TabPanel>
             <TabPanel>
-            <Card>
-              To-do
-              </Card>
+            <BarChart
+                className="mt-6"
+                data={chartService}
+                index="t"
+                categories={["on_time_drop_offs","delayed_drop_offs"]}
+                colors={["green","red"]}
+                yAxisWidth={48}
+                stack={true}
+              />
             </TabPanel>
             <TabPanel>
-              <Card>
-              To-do
-              </Card>
+            <BarChart
+                className="mt-6"
+                data={chartPallets}
+                index="t"
+                categories={["total_pallets"]}
+                colors={["cyan"]}
+                yAxisWidth={48}
+              />
             </TabPanel>
             <TabPanel>
               <BarChart
                 className="mt-6"
-                data={chartOnTimePickups}
+                data={chartUrgency}
                 index="t"
                 categories={["on_time_pick_ups","delayed_pick_ups"]}
                 colors={["green","red"]}
@@ -216,9 +261,14 @@ export default function Dashboard() {
               />
             </TabPanel>
             <TabPanel>
-              <Card>
-              To-do
-              </Card>
+            <BarChart
+                className="mt-6"
+                data={chartSpending}
+                index="t"
+                categories={["total_spent"]}
+                colors={["yellow"]}
+                yAxisWidth={48}
+              />
             </TabPanel>
           </TabPanels>
         </TabGroup>

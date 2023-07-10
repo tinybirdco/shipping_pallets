@@ -2,21 +2,86 @@ TOKEN "Daniels, Lane and Farrell token" READ
 
 TOKEN "Conrad Inc token" READ
 
-NODE chart_total_spent
+TOKEN "api_charts_endpoint_read_5435" READ
+
+TOKEN "Bird Inc token" READ
+
+NODE chart_shipments
 SQL >
 
-    SELECT customer_name,toStartOfMonth(shipping_date) t, round(sum(price),3) as total_spent
-    FROM shipping_pallets_t_3443
+    %
+    SELECT 
+      customer_name,
+      {% if date_diff_in_days(date_to, date_from, date_format="%Y-%m-%dT%H:%M:%S.%fz") < 45 %}
+      shipping_date t,
+      {% else %}
+      toStartOfMonth(shipping_date) t,
+      {% end %}
+      count() as total_shipments
+    FROM bq_shipping_pallets
+    WHERE timestamp >= parseDateTimeBestEffort({{String(date_from, '2023-06-10T00:00:00.000Z', required=True)}})
+    AND timestamp <= parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59.999Z', required=True)}})
     GROUP BY customer_name, t
     ORDER BY t ASC
 
 
 
-NODE chart_shipments
+NODE chart_on_time_drop_offs
 SQL >
 
-    SELECT customer_name, toStartOfMonth(shipping_date) t, count() as total_shipments
-    FROM shipping_pallets_t_3443
+    %
+    SELECT 
+      customer_name,
+      {% if date_diff_in_days(date_to, date_from, date_format="%Y-%m-%dT%H:%M:%S.%fz") < 45 %}
+      shipping_date t,
+      {% else %}
+      toStartOfMonth(shipping_date) t,
+      {% end %}
+      sumIf(delivered_on_time='true',1) as on_time_drop_offs,
+      count()-on_time_drop_offs as delayed_drop_offs
+    FROM bq_shipping_pallets
+    WHERE timestamp >= parseDateTimeBestEffort({{String(date_from, '2023-06-10T00:00:00.000Z', required=True)}})
+    AND timestamp <= parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59.999Z', required=True)}})
+    GROUP BY customer_name, t
+    ORDER BY t ASC
+
+
+
+NODE chart_total_spent
+SQL >
+
+    %
+    SELECT 
+      customer_name,
+      {% if date_diff_in_days(date_to, date_from, date_format="%Y-%m-%dT%H:%M:%S.%fz") < 45 %}
+      shipping_date t,
+      {% else %}
+      toStartOfMonth(shipping_date) t,
+      {% end %}
+      round(sum(price),3) as total_spent
+    FROM bq_shipping_pallets
+    WHERE timestamp >= parseDateTimeBestEffort({{String(date_from, '2023-06-10T00:00:00.000Z', required=True)}})
+    AND timestamp <= parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59.999Z', required=True)}})
+    GROUP BY customer_name, t
+    ORDER BY t ASC
+
+
+
+NODE chart_pallets
+SQL >
+
+    %
+    SELECT 
+      customer_name,
+      {% if date_diff_in_days(date_to, date_from, date_format="%Y-%m-%dT%H:%M:%S.%fz") < 45 %}
+      shipping_date t,
+      {% else %}
+      toStartOfMonth(shipping_date) t,
+      {% end %}
+      sum(pallets) as total_pallets
+    FROM bq_shipping_pallets
+    WHERE timestamp >= parseDateTimeBestEffort({{String(date_from, '2023-06-10T00:00:00.000Z', required=True)}})
+    AND timestamp <= parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59.999Z', required=True)}})
     GROUP BY customer_name, t
     ORDER BY t ASC
 
@@ -25,12 +90,19 @@ SQL >
 NODE chart_on_time_pick_ups
 SQL >
 
+    %
     SELECT 
       customer_name,
+      {% if date_diff_in_days(date_to, date_from, date_format="%Y-%m-%dT%H:%M:%S.%fz") < 45 %}
+      shipping_date t,
+      {% else %}
       toStartOfMonth(shipping_date) t,
+      {% end %}
       sumIf(picked_up_on_time='true',1) as on_time_pick_ups,
-      count()-on_time_pick_ups+3 as delayed_pick_ups
-    FROM shipping_pallets_t_3443
+      count()-on_time_pick_ups as delayed_pick_ups
+    FROM bq_shipping_pallets
+    WHERE timestamp >= parseDateTimeBestEffort({{String(date_from, '2023-06-10T00:00:00.000Z', required=True)}})
+    AND timestamp <= parseDateTimeBestEffort({{String(date_to, '2023-07-31T23:59:59.999Z', required=True)}})
     GROUP BY customer_name, t
     ORDER BY t ASC
 
@@ -79,23 +151,24 @@ NODE endpoint
 SQL >
 
     %
-    {% if not defined(kpi) or kpi not in ['shipments','pallets','spent','on_time_pickups','on_time_dropoffs'] %}
+    {% if not defined(kpi) or kpi not in ['shipments','pallets','spending','service','urgency'] %}
       {{ error('kpi query param is required and needs to be one of the following: shipment, pallets, spent, on_time_pickups, on_time_dropoffs') }}
     {% end %}
     SELECT *
     {%if kpi == 'shipments'%}
     FROM chart_shipments
-    {%elif kpi == 'spent'%}
+    {%elif kpi == 'service'%}
+    FROM chart_on_time_drop_offs
+    {%elif kpi == 'pallets'%}
+    FROM chart_pallets
+    {%elif kpi == 'spending'%}
     FROM chart_total_spent
-    {%elif kpi == 'on_time_pickups'%}
+    {%elif kpi == 'urgency'%}
     FROM chart_on_time_pick_ups
-    --rest and default to be added
     {%else%}
     FROM chart_total_spent
     {%end%}
     RIGHT JOIN fill_dates USING t
-    --once selected time range in chart is taken into account
-    --we should also make the right join dynamic
 
 
 
