@@ -34,7 +34,10 @@ export default function Dashboard() {
   );
 
   const [kpiShipments, setKpiShipments] = useState([{ customer_name: '', total_shipments: 0 }]);
+  const [kpiPallets, setKpiPallets] = useState([{ customer_name: '', total_pallets: 0 }]);
   const [kpiSpent, setKpiSpent] = useState([{ customer_name: '', total_spent: 0 }]);
+  const [kpiPickupOntime, setKpiPickupOntime] = useState([{ customer_name: '', percent_picked_up_on_time: 0.0 }]);
+  const [kpiDeliveredOntime, setKpiDeliveredOntime] = useState([{ customer_name: '', pct_delivered_ontime: 0.0 }]);
   const [chartShipments, setChartShipments] = useState([{ customer_name: '', t: '', total_shipments: 0 }]);
   const [chartOnTimePickups, setChartOnTimePickups] = useState([{ customer_name: '', t: '', on_time_pick_ups: 2, delayed_pick_ups: 1 }]);
 
@@ -46,6 +49,9 @@ export default function Dashboard() {
 
   let apiKpiShipments = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=shipments&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
   let apiKpiSpent = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=spent&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
+  let apiKpiPallets = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=pallets&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
+  let apiKpiPickupOntime = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=pct_pickup_ontime&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
+  let apiKpiDeliveredOntime = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=pct_delivered_ontime&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
 
   let apiChartShipments = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=shipments&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
   let apiChartOnTimePickups = `https://${TINYBIRD_HOST}/v0/pipes/api_charts.json?kpi=on_time_pickups&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
@@ -70,12 +76,36 @@ export default function Dashboard() {
   }, [apiKpiShipments]);
 
   useInterval(() => {
+    fetchTinybirdUrl(apiKpiPallets, setKpiPallets);
+  }, msRefresh)
+
+  useEffect(() => {
+    fetchTinybirdUrl(apiKpiPallets, setKpiPallets);
+  }, [apiKpiPallets]);
+
+  useInterval(() => {
     fetchTinybirdUrl(apiKpiSpent, setKpiSpent);
   }, msRefresh)
 
   useEffect(() => {
     fetchTinybirdUrl(apiKpiSpent, setKpiSpent);
   }, [apiKpiSpent]);
+
+  useInterval(() => {
+    fetchTinybirdUrl(apiKpiPickupOntime, setKpiPickupOntime);
+  }, msRefresh)
+
+  useEffect(() => {
+    fetchTinybirdUrl(apiKpiPickupOntime, setKpiPickupOntime);
+  }, [apiKpiPickupOntime]);
+
+  useInterval(() => {
+    fetchTinybirdUrl(apiKpiDeliveredOntime, setKpiDeliveredOntime);
+  }, msRefresh)
+
+  useEffect(() => {
+    fetchTinybirdUrl(apiKpiDeliveredOntime, setKpiDeliveredOntime);
+  }, [apiKpiDeliveredOntime]);
 
   useInterval(() => {
     fetchTinybirdUrl(apiChartShipments, setChartShipments);
@@ -129,7 +159,7 @@ export default function Dashboard() {
           </Card>
           <Card>
             <Text>Pallets</Text>
-            <Metric>To-do</Metric>
+            <Metric>{kpiPallets[0].total_shipments}</Metric>
           </Card>
           <Card>
             <Text>Total Spent</Text>
@@ -137,11 +167,11 @@ export default function Dashboard() {
           </Card>
           <Card>
             <Text>On time pick ups</Text>
-            <Metric>To-do%</Metric>
+            <Metric>{kpiPickupOntime[0].percent_picked_up_on_time}</Metric>
           </Card>
           <Card>
             <Text>On time drop offs</Text>
-            <Metric>To-do%</Metric>
+            <Metric>{kpiDeliveredOntime[0].percent_delivered_on_time}</Metric>
           </Card>
         </Grid>
 
