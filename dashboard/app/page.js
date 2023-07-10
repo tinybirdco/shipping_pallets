@@ -37,7 +37,7 @@ export default function Dashboard() {
   const [kpiPallets, setKpiPallets] = useState([{ customer_name: '', total_pallets: 0 }]);
   const [kpiSpent, setKpiSpent] = useState([{ customer_name: '', total_spent: 0 }]);
   const [kpiPickupOntime, setKpiPickupOntime] = useState([{ customer_name: '', percent_picked_up_on_time: 0.0 }]);
-  const [kpiDeliveredOntime, setKpiDeliveredOntime] = useState([{ customer_name: '', pct_delivered_ontime: 0.0 }]);
+  const [kpiDeliveredOntime, setKpiDeliveredOntime] = useState([{ customer_name: '', percent_delivered_on_time: 0.0 }]);
   const [chartShipments, setChartShipments] = useState([{ customer_name: '', t: '', total_shipments: 0 }]);
   const [chartService, setChartService] = useState([{ customer_name: '', t: '', on_time_drop_offs: 0, delayed_drop_offs: 0 }]);
   const [chartPallets, setChartPallets] = useState([{ customer_name: '', t: '', total_pallets: 0 }]);
@@ -46,7 +46,7 @@ export default function Dashboard() {
 
 
   let date_from = dates.from ? new Date(dates.from.getTime() - dates.from.getTimezoneOffset() * 60000).toISOString() : new Date(2023, 5, 1).toISOString();
-  let date_to = dates.to ? new Date(dates.to.getTime() - dates.to.getTimezoneOffset() * 60000 + 60000 * 60 * 24 - 1).toISOString() : date_from;
+  let date_to = dates.to ? new Date(dates.to.getTime() - dates.to.getTimezoneOffset() * 60000 + 60000 * 60 * 24 - 1).toISOString() : new Date(new Date(date_from).getTime() + 60000 * 60 * 24 - 1).toISOString();
 
   let apiKpiShipments = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=shipments&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
   let apiKpiSpent = `https://${TINYBIRD_HOST}/v0/pipes/api_kpis.json?kpi=spent&token=${token}${date_from ? `&date_from=${date_from}` : ''}${date_to ? `&date_to=${date_to}` : ''}`;
@@ -140,7 +140,7 @@ export default function Dashboard() {
     fetchTinybirdUrl(apiChartSpending, setChartSpending);
   }, [apiChartSpending]);
 
-  
+
   const validateInputToken = async (inputValue) => {
     const response = await fetch(`https://${TINYBIRD_HOST}/v0/pipes?token=${inputValue}`);
     // console.log(response.status)
@@ -156,7 +156,9 @@ export default function Dashboard() {
     }
   };
 
-  const percentageFormatter = (number) => `${Intl.NumberFormat("us").format(number).toString()}%`;
+  const dataFormatter = (number) => {
+    return Intl.NumberFormat('es-ES').format(number).toString()
+  };
 
   return (
     <>
@@ -164,24 +166,32 @@ export default function Dashboard() {
         <title>Partner Dashboard</title>
       </Head>
       <main className="bg-slate-50 p-6 sm:p-10">
-      <Title>{kpiPallets[0].customer_name} Partnership Dashboard</Title>
+        <Title>{kpiPallets[0]?.customer_name ?? ''} Partnership Dashboard</Title>
 
-      <Text>Token</Text>
+        <Grid
+          numItemsLg={2}
+          className="p-6"
+        >
+          <div>
+            <Text>Date range picker</Text>
+            <DateRangePicker
+              value={dates}
+              onValueChange={setDates}
+              enableYearPagination={true}
+              dropdownPlaceholder="Pick dates"
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Text>Token</Text>
             <TextInput
               value={token}
               onChange={handleInputTokenChange}
               className="mt-2 max-w-xs"
-            // error={async (value) => !await validateInputToken(value)}
             />
-      
+          </div>
+        </Grid>
 
-      <DateRangePicker
-            value={dates}
-            onValueChange={setDates}
-            enableYearPagination={true}
-            dropdownPlaceholder="Pick dates"
-            className="mt-2"
-          />
 
         <Grid
           numItemsLg={5}
@@ -189,23 +199,23 @@ export default function Dashboard() {
         >
           <Card>
             <Text>Shipments</Text>
-            <Metric>{new Intl.NumberFormat('es-ES').format(kpiShipments[0].total_shipments)}</Metric>
+            <Metric>{dataFormatter(kpiShipments[0]?.total_shipments) ?? 0}</Metric>
           </Card>
           <Card>
             <Text>Pallets</Text>
-            <Metric>{new Intl.NumberFormat('es-ES').format(kpiPallets[0].total_pallets)}</Metric>
+            <Metric>{dataFormatter(kpiPallets[0]?.total_pallets) ?? 0}</Metric>
           </Card>
           <Card>
             <Text>Total Spent</Text>
-            <Metric>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(kpiSpent[0].total_spent)}</Metric>
+            <Metric>${dataFormatter(kpiSpent[0]?.total_spent) ?? 0}</Metric>
           </Card>
           <Card>
             <Text>On time Collections</Text>
-            <Metric>{kpiPickupOntime[0].percent_picked_up_on_time}%</Metric>
+            <Metric>{dataFormatter(kpiPickupOntime[0]?.percent_picked_up_on_time) ?? 0}%</Metric>
           </Card>
           <Card>
             <Text>On time Deliveries</Text>
-            <Metric>{kpiDeliveredOntime[0].percent_delivered_on_time}%</Metric>
+            <Metric>{dataFormatter(kpiDeliveredOntime[0]?.percent_delivered_on_time) ?? 0}%</Metric>
           </Card>
         </Grid>
 
@@ -225,28 +235,31 @@ export default function Dashboard() {
                 index="t"
                 categories={["total_shipments"]}
                 colors={["blue"]}
-                yAxisWidth={48}
+                yAxisWidth={70}
+                valueFormatter={dataFormatter}
               />
             </TabPanel>
             <TabPanel>
-            <BarChart
+              <BarChart
                 className="mt-6"
                 data={chartService}
                 index="t"
-                categories={["on_time_drop_offs","delayed_drop_offs"]}
-                colors={["green","red"]}
-                yAxisWidth={48}
+                categories={["on_time_drop_offs", "delayed_drop_offs"]}
+                colors={["green", "red"]}
+                yAxisWidth={70}
                 stack={true}
+                valueFormatter={dataFormatter}
               />
             </TabPanel>
             <TabPanel>
-            <BarChart
+              <BarChart
                 className="mt-6"
                 data={chartPallets}
                 index="t"
                 categories={["total_pallets"]}
                 colors={["cyan"]}
-                yAxisWidth={48}
+                yAxisWidth={70}
+                valueFormatter={dataFormatter}
               />
             </TabPanel>
             <TabPanel>
@@ -254,20 +267,22 @@ export default function Dashboard() {
                 className="mt-6"
                 data={chartUrgency}
                 index="t"
-                categories={["on_time_pick_ups","delayed_pick_ups"]}
-                colors={["green","red"]}
-                yAxisWidth={48}
+                categories={["on_time_pick_ups", "delayed_pick_ups"]}
+                colors={["emerald", "rose"]}
+                yAxisWidth={70}
                 stack={true}
+                valueFormatter={dataFormatter}
               />
             </TabPanel>
             <TabPanel>
-            <BarChart
+              <BarChart
                 className="mt-6"
                 data={chartSpending}
                 index="t"
                 categories={["total_spent"]}
-                colors={["yellow"]}
-                yAxisWidth={48}
+                colors={["teal"]}
+                yAxisWidth={70}
+                valueFormatter={dataFormatter}
               />
             </TabPanel>
           </TabPanels>
