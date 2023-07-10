@@ -1,3 +1,5 @@
+TOKEN "api_kpis_endpoint_read_3573" READ
+
 TOKEN "Daniels, Lane and Farrell token" READ
 
 TOKEN "Conrad Inc token" READ
@@ -22,11 +24,56 @@ SQL >
 
 
 
+NODE kpi_pickup_ontime
+SQL >
+
+    SELECT 
+        customer_name, 
+        percent_picked_up_on_time
+    FROM 
+        (
+            SELECT 
+                customer_name, 
+                round(SUM(if(picked_up_on_time = 'true', 1, 0)) / COUNT(*) * 100, 2) AS percent_picked_up_on_time
+            FROM shipping_pallets_t_3443
+            GROUP BY customer_name
+        ) AS subquery
+
+
+
+
+NODE kpi_delivered_ontime
+SQL >
+
+    SELECT 
+        customer_name,
+        percent_delivered_on_time
+    FROM 
+        (
+            SELECT 
+                customer_name, 
+                round(SUM(if(delivered_on_time = 'true', 1, 0)) / COUNT(*) * 100, 2) AS percent_delivered_on_time
+            FROM shipping_pallets_t_3443
+            GROUP BY customer_name
+        ) AS subquery
+
+
+
+
+NODE kpi_pallets
+SQL >
+
+    SELECT customer_name, sum(pallets) as total_pallets
+    FROM shipping_pallets_t_3443
+    GROUP BY customer_name
+
+
+
 NODE endpoint
 SQL >
 
     %
-    {% if not defined(kpi) or kpi not in ['shipments','pallets','spent','on_time_pickups','on_time_dropoffs'] %}
+    {% if not defined(kpi) or kpi not in ['shipments','pallets','spent','pct_pickup_ontime','pct_delivered_ontime'] %}
       {{ error('kpi query param is required and needs to be one of the following: shipment, pallets, spent, on_time_pickups, on_time_dropoffs') }}
     {% end %}
     SELECT * 
@@ -34,6 +81,12 @@ SQL >
     FROM kpi_shipments
     {%elif kpi == 'spent'%}
     FROM kpi_total_spent
+    {%elif kpi == 'pallets'%}
+    FROM kpi_pallets
+    {%elif kpi == 'pct_pickup_ontime'%}
+    FROM kpi_pickup_ontime
+    {%elif kpi == 'pct_delivered_ontime'%}
+    FROM kpi_delivered_ontime
     --rest and default to be added
     {%end%}
 

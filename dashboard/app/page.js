@@ -159,7 +159,7 @@ export default function Dashboard() {
           </Card>
           <Card>
             <Text>Pallets</Text>
-            <Metric>{kpiPallets[0].total_shipments}</Metric>
+            <Metric>{kpiPallets[0].total_pallets}</Metric>
           </Card>
           <Card>
             <Text>Total Spent</Text>
@@ -167,11 +167,11 @@ export default function Dashboard() {
           </Card>
           <Card>
             <Text>On time pick ups</Text>
-            <Metric>{kpiPickupOntime[0].percent_picked_up_on_time}</Metric>
+            <Metric>{kpiPickupOntime[0].percent_picked_up_on_time}%</Metric>
           </Card>
           <Card>
             <Text>On time drop offs</Text>
-            <Metric>{kpiDeliveredOntime[0].percent_delivered_on_time}</Metric>
+            <Metric>{kpiDeliveredOntime[0].percent_delivered_on_time}%</Metric>
           </Card>
         </Grid>
 
