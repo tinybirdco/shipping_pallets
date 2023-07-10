@@ -165,7 +165,17 @@ export default function Dashboard() {
               />
             </TabPanel>
             <TabPanel>
-            <BarChart
+            <Card>
+              To-do
+              </Card>
+            </TabPanel>
+            <TabPanel>
+              <Card>
+              To-do
+              </Card>
+            </TabPanel>
+            <TabPanel>
+              <BarChart
                 className="mt-6"
                 data={chartOnTimePickups}
                 index="t"
@@ -174,16 +184,6 @@ export default function Dashboard() {
                 yAxisWidth={48}
                 stack={true}
               />
-            </TabPanel>
-            <TabPanel>
-              <Card>
-              To-do
-              </Card>
-            </TabPanel>
-            <TabPanel>
-              <Card>
-              To-do
-              </Card>
             </TabPanel>
             <TabPanel>
               <Card>
