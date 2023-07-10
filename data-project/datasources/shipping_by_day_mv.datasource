@@ -1,0 +1,14 @@
+# Data Source created from Pipe 'mat_shipping_by_day'
+
+SCHEMA >
+    `customer_name` String,
+    `shipping_date` Date32,
+    `shipments` AggregateFunction(count),
+    `pallets` SimpleAggregateFunction(sum, Int64),
+    `price` SimpleAggregateFunction(sum, Float64),
+    `picked_up_on_time` AggregateFunction(countIf, Nullable(UInt8)),
+    `delivered_on_time` AggregateFunction(countIf, Nullable(UInt8))
+
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(shipping_date)"
+ENGINE_SORTING_KEY "customer_name, shipping_date"

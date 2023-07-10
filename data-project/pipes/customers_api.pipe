@@ -1,0 +1,8 @@
+TOKEN "customers_api_endpoint_read_6743" READ
+
+NODE customers_0
+SQL >
+
+    SELECT * FROM customers
+
+

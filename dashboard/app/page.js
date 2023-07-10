@@ -199,23 +199,23 @@ export default function Dashboard() {
         >
           <Card>
             <Text>Shipments</Text>
-            <Metric>{dataFormatter(kpiShipments[0]?.total_shipments) ?? 0}</Metric>
+            <Metric>{dataFormatter(kpiShipments[0]?.total_shipments ?? 0)}</Metric>
           </Card>
           <Card>
             <Text>Pallets</Text>
-            <Metric>{dataFormatter(kpiPallets[0]?.total_pallets) ?? 0}</Metric>
+            <Metric>{dataFormatter(kpiPallets[0]?.total_pallets ?? 0)}</Metric>
           </Card>
           <Card>
             <Text>Total Spent</Text>
-            <Metric>${dataFormatter(kpiSpent[0]?.total_spent) ?? 0}</Metric>
+            <Metric>${dataFormatter(kpiSpent[0]?.total_spent ?? 0)}</Metric>
           </Card>
           <Card>
             <Text>On time Collections</Text>
-            <Metric>{dataFormatter(kpiPickupOntime[0]?.percent_picked_up_on_time) ?? 0}%</Metric>
+            <Metric>{dataFormatter(kpiPickupOntime[0]?.percent_picked_up_on_time ?? 0)}%</Metric>
           </Card>
           <Card>
             <Text>On time Deliveries</Text>
-            <Metric>{dataFormatter(kpiDeliveredOntime[0]?.percent_delivered_on_time) ?? 0}%</Metric>
+            <Metric>{dataFormatter(kpiDeliveredOntime[0]?.percent_delivered_on_time ?? 0)}%</Metric>
           </Card>
         </Grid>
 

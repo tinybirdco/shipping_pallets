@@ -1,0 +1,22 @@
+NODE shipping_by_day_0
+SQL >
+
+    SELECT
+        coalesce(customer_name, 'customer_unknown') AS customer_name,
+        coalesce(shipping_date, toDate(0)) AS shipping_date,
+        countState() AS shipments,
+        sumSimpleState(coalesce(pallets, 0)) AS pallets,
+        sumSimpleState(coalesce(price, 0)) AS price,
+        countIfState(picked_up_on_time = 'true') AS picked_up_on_time,
+        countIfState(delivered_on_time = 'true') AS delivered_on_time
+    FROM bq_shipping_pallets
+    GROUP BY
+        customer_name,
+        shipping_date
+
+TYPE materialized
+DATASOURCE shipping_by_day_mv
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(shipping_date)"
+ENGINE_SORTING_KEY "customer_name, shipping_date"
+
