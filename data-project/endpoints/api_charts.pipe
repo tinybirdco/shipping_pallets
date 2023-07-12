@@ -2,8 +2,6 @@ TOKEN "Daniels, Lane and Farrell token" READ
 
 TOKEN "Conrad Inc token" READ
 
-TOKEN "api_charts_endpoint_read_5435" READ
-
 TOKEN "Bird Inc token" READ
 
 NODE chart_shipments

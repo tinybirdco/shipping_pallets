@@ -1,6 +1,25 @@
+# Tremor dashboard
+
+The app is made with a React charting library called [Tremor](https://www.tremor.so/), and getting the data from Tinybird.
+
+## Previous steps
+
+Create a `.env` file with the following 2 variables:
+
+```.env
+NEXT_PUBLIC_TINYBIRD_HOST=<api.tinybird.co or the correspondent host if the project is in a different url>
+NEXT_PUBLIC_TINYBIRD_TOKEN=<token_with_read_permissions>
+```
+
+```bash
+npm install
+```
+
+## Next.js default readme
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+### Getting Started
 
 First, run the development server:
 

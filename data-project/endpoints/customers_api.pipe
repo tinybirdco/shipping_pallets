@@ -1,4 +1,4 @@
-TOKEN "customers_api_endpoint_read_6743" READ
+TOKEN "customers_api_endpoint_read" READ
 
 NODE customers_0
 SQL >
